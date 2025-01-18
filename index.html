@@ -6,64 +6,75 @@
     <title>ChatGPT Chatbot</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
             margin: 0;
+            padding: 0;
             background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
         .chat-container {
             width: 90%;
             max-width: 600px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        .chat-box {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background: #f1f1f1;
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
-        .chat {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            max-height: 60vh;
-            overflow-y: auto;
+        .chat-bubble {
+            max-width: 70%;
             padding: 10px;
-            background: white;
-            border: 1px solid #ddd;
             border-radius: 8px;
+            font-size: 0.9em;
+            line-height: 1.4;
         }
-        .message {
-            padding: 8px 12px;
-            border-radius: 6px;
-        }
-        .user {
+        .user-bubble {
             align-self: flex-end;
             background: #007bff;
             color: white;
         }
-        .bot {
+        .bot-bubble {
             align-self: flex-start;
-            background: #f1f1f1;
+            background: #e1e1e1;
         }
         .input-container {
             display: flex;
-            gap: 10px;
+            border-top: 1px solid #ddd;
         }
         input {
             flex: 1;
             padding: 10px;
             font-size: 1em;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            border: none;
+            border-top-left-radius: 8px;
         }
         button {
-            padding: 10px 20px;
-            font-size: 1em;
             background: #007bff;
             color: white;
             border: none;
-            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-top-right-radius: 8px;
             cursor: pointer;
         }
         button:hover {
@@ -73,49 +84,57 @@
 </head>
 <body>
     <div class="chat-container">
-        <div id="chat" class="chat"></div>
+        <div class="chat-header">ChatGPT Chatbot</div>
+        <div id="chatBox" class="chat-box"></div>
         <div class="input-container">
-            <input id="userInput" type="text" placeholder="Type your message..." />
+            <input id="userInput" type="text" placeholder="Type your message...">
             <button onclick="sendMessage()">Send</button>
         </div>
     </div>
 
     <script>
-        const chat = document.getElementById('chat');
+        const chatBox = document.getElementById('chatBox');
+        const userInput = document.getElementById('userInput');
 
         function addMessage(content, sender) {
-            const message = document.createElement('div');
-            message.className = `message ${sender}`;
-            message.textContent = content;
-            chat.appendChild(message);
-            chat.scrollTop = chat.scrollHeight;
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${sender}-bubble`;
+            bubble.innerHTML = content;
+            chatBox.appendChild(bubble);
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
         async function sendMessage() {
-            const input = document.getElementById('userInput');
-            const userMessage = input.value.trim();
-            if (!userMessage) return;
+            const message = userInput.value.trim();
+            if (!message) return;
 
-            addMessage(userMessage, 'user');
-            input.value = '';
+            addMessage(message, 'user');
+            userInput.value = '';
 
+            addMessage('Typing...', 'bot');
             try {
                 const response = await fetch('./chat-action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: userMessage }),
+                    body: JSON.stringify({ message }),
                 });
 
                 const data = await response.json();
+                chatBox.lastChild.remove(); // Remove "Typing..." bubble
                 if (data.reply) {
                     addMessage(data.reply, 'bot');
                 } else {
-                    addMessage('Error: Unable to get a response.', 'bot');
+                    addMessage('Error: No reply received.', 'bot');
                 }
             } catch (error) {
-                addMessage('Error: Could not connect to the server.', 'bot');
+                chatBox.lastChild.remove(); // Remove "Typing..." bubble
+                addMessage('Error: Unable to connect.', 'bot');
             }
         }
+
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
     </script>
 </body>
 </html>
