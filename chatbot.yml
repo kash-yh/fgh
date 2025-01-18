@@ -1,6 +1,5 @@
 name: Chatbot Proxy
 on:
-  workflow_dispatch:
   repository_dispatch:
     types: [chat-request]
 
@@ -8,10 +7,10 @@ jobs:
   chatbot:
     runs-on: ubuntu-latest
     steps:
-      - name: ChatGPT API Call
-        id: chatgpt
+      - name: Call OpenAI API
+        id: call_api
         env:
-          OPENAI_API_KEY: ${{ secrets.sk-1234uvwxabcd5678uvwxabcd1234uvwxabcd5678 }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           message=$(echo "${{ github.event.client_payload.message }}" | jq -r)
           response=$(curl -s -X POST https://api.openai.com/v1/chat/completions \
@@ -23,11 +22,9 @@ jobs:
             }' | jq -r '.choices[0].message.content')
           echo "::set-output name=response::$response"
 
-      - name: Return Response
+      - name: Return API Response
         uses: actions/github-script@v6
         with:
           script: |
-            const payload = {
-              reply: '${{ steps.chatgpt.outputs.response }}'
-            };
+            const payload = { reply: "${{ steps.call_api.outputs.response }}" };
             return JSON.stringify(payload);
