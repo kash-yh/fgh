@@ -1,0 +1,33 @@
+name: Chatbot Proxy
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [chat-request]
+
+jobs:
+  chatbot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ChatGPT API Call
+        id: chatgpt
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          message=$(echo "${{ github.event.client_payload.message }}" | jq -r)
+          response=$(curl -s -X POST https://api.openai.com/v1/chat/completions \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -d '{
+              "model": "gpt-4",
+              "messages": [{"role": "user", "content": "'"$message"'"}]
+            }' | jq -r '.choices[0].message.content')
+          echo "::set-output name=response::$response"
+
+      - name: Return Response
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const payload = {
+              reply: '${{ steps.chatgpt.outputs.response }}'
+            };
+            return JSON.stringify(payload);
