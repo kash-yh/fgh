@@ -11,7 +11,7 @@ jobs:
       - name: ChatGPT API Call
         id: chatgpt
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.sk-1234uvwxabcd5678uvwxabcd1234uvwxabcd5678 }}
         run: |
           message=$(echo "${{ github.event.client_payload.message }}" | jq -r)
           response=$(curl -s -X POST https://api.openai.com/v1/chat/completions \
