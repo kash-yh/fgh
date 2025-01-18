@@ -1,1 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f9f9f9;
+        }
+        .chat-container {
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .message {
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        .user {
+            align-self: flex-end;
+            background: #007bff;
+            color: white;
+        }
+        .bot {
+            align-self: flex-start;
+            background: #f1f1f1;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div id="chat" class="chat"></div>
+        <div class="input-container">
+            <input id="userInput" type="text" placeholder="Type your message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
 
+    <script>
+        const chat = document.getElementById('chat');
+
+        function addMessage(content, sender) {
+            const message = document.createElement('div');
+            message.className = `message ${sender}`;
+            message.textContent = content;
+            chat.appendChild(message);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const userMessage = input.value.trim();
+            if (!userMessage) return;
+
+            addMessage(userMessage, 'user');
+            input.value = '';
+
+            try {
+                const response = await fetch('./chat-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userMessage }),
+                });
+
+                const data = await response.json();
+                if (data.reply) {
+                    addMessage(data.reply, 'bot');
+                } else {
+                    addMessage('Error: Unable to get a response.', 'bot');
+                }
+            } catch (error) {
+                addMessage('Error: Could not connect to the server.', 'bot');
+            }
+        }
+    </script>
+</body>
+</html>
